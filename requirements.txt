@@ -1,0 +1,5 @@
+datasets==2.14.4
+deep_translator==1.11.4
+nlpaug==1.1.11
+numpy==1.25.2
+pandas==2.0.3
