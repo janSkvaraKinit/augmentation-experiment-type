@@ -7,31 +7,28 @@ from deep_translator import GoogleTranslator
 import pandas as pd
 import asyncio
 
-def synonym_augmentation(text, synonym_aug_p):
-  aug = naw.SynonymAug(aug_src='wordnet', aug_p=synonym_aug_p , aug_min=1, aug_max=None)
-  return aug.augment(text)
+def synonym_augmentation(text, synonym_word_aug):
+  return synonym_word_aug.augment(text)
 
-def swap_word_augmentation(text, swap_word_aug_p):
-  aug = naw.RandomWordAug(action="swap", aug_p=swap_word_aug_p, aug_min=1, aug_max=None)
-  return aug.augment(text)
+def swap_word_augmentation(text, swap_word_aug):
+  return swap_word_aug.augment(text)
 
-def delete_word_augmentation(text, delete_word_aug_p):
-  aug = naw.RandomWordAug(action="delete", aug_p=delete_word_aug_p, aug_min=1, aug_max=None)
-  return aug.augment(text)
+def delete_word_augmentation(text,  delete_word_aug):
+  return delete_word_aug.augment(text)
 
-def back_translation_augmentation(text, original_language, target_language ):
-  translator = GoogleTranslator(source=original_language, target=target_language)
-  back_translator = GoogleTranslator(source=target_language, target=original_language)
+def back_translation_augmentation(text, translator_aug, back_translator_aug ):
+  translator_aug = GoogleTranslator(source=original_language, target=target_language)
+  back_translator_aug = GoogleTranslator(source=target_language, target=original_language)
 
-  translation = translator.translate(text)
-  return back_translator.translate(translation)
+  translation = translator_aug.translate(text)
+  return back_translator_aug.translate(translation)
 
 def swap_neighbor_sentences_augmentation(text, swap_neighbor_sentences_aug_p):
-  aug = nas.RandomSentAug(mode='neighbor', action='swap', aug_p=swap_neighbor_sentences_aug_p, aug_min=1, aug_max=None)
+  swap_neighbor_sentences_aug = nas.RandomSentAug(mode='neighbor', action='swap', aug_p=swap_neighbor_sentences_aug_p, aug_min=1, aug_max=None)
   return aug.augment(text)
 
 def swap_random_sentences_augmentation(text, swap_random_sentences_aug_p):
-  aug = nas.RandomSentAug(mode='random', action='swap', aug_p=swap_random_sentences_aug_p, aug_min=1, aug_max=None)
+  swap_random_sentences_aug = nas.RandomSentAug(mode='random', action='swap', aug_p=swap_random_sentences_aug_p, aug_min=1, aug_max=None)
   return aug.augment(text)
 
 
@@ -115,6 +112,12 @@ def main():
   print(f"Size of augmented dataset: {size_of_augmented_dataset}")
   dataset_indices = random.sample(range(len(dataset[split_name])), size_of_augmented_dataset)
   augmentation_samples = dataset[split_name][dataset_indices]
+
+  synonym_word_aug = naw.SynonymAug(aug_src='wordnet', aug_p=synonym_aug_p , aug_min=1, aug_max=None)
+  swap_word_aug = naw.RandomWordAug(action="swap", aug_p=swap_word_aug_p, aug_min=1, aug_max=None)
+  delete_word_aug = naw.RandomWordAug(action="delete", aug_p=delete_word_aug_p, aug_min=1, aug_max=None)
+  translator_aug = GoogleTranslator(source=original_lan_back_translation_aug, target=target_lan_back_translation_aug)
+  back_translator_aug = GoogleTranslator(source=target_lan_back_translation_aug, target=original_lan_back_translation_aug)
 
   loop = asyncio.get_event_loop()   
   looper = asyncio.gather(*[augmentation(i, augmentation_samples, split_name, synonym_aug_probability, swap_word_aug_probability, delete_word_aug_probability, 
