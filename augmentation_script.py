@@ -22,8 +22,12 @@ def back_translation_augmentation(text, original_language, target_language ):
   translator = GoogleTranslator(source=original_language, target=target_language)
   back_translator = GoogleTranslator(source=target_language, target=original_language)
 
-  translation = translator.translate(text)
-  return back_translator.translate(translation)
+  try:
+    translation = translator.translate(text)
+    return back_translator.translate(translation)
+  except:
+    print("Vraciam rovnaky text")
+    return text
 
 def swap_neighbor_sentences_augmentation(text, swap_neighbor_sentences_aug_p):
   aug = nas.RandomSentAug(mode='neighbor', action='swap', aug_p=swap_neighbor_sentences_aug_p, aug_min=1, aug_max=None)
@@ -39,7 +43,7 @@ def main():
   proportio_of_dataset = 0.01 #Proportion of dataset, which will be augmentated
   split_name = "train" #Split name, which indicate what loaded dataset we should augmentate
 
-  synonym_aug_probability = 1 #Probability distribution for synonym augmentation
+  synonym_aug_probability = 0 #Probability distribution for synonym augmentation
   synonym_aug_p = 0.3 #Percentage of word will be synonym word augmented 
 
   swap_word_aug_probability = 0 #Probability distribution for swap word augmentation
@@ -54,7 +58,7 @@ def main():
   swap_random_sentences_aug_probability = 0 #Probability distribution for delete word augmentation
   swap_random_sentences_aug_p = 0.3 #Percentage of sentences will be deleted
 
-  back_translation_aug_probability = 0 #Probability distribution for back translation augmentation
+  back_translation_aug_probability = 1 #Probability distribution for back translation augmentation
   original_lan_back_translation_aug = 'en' #Original language of text
   target_lan_back_translation_aug = 'sk' #Target language, which is used during back transaltion augmentation
 

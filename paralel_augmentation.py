@@ -17,19 +17,18 @@ def delete_word_augmentation(text,  delete_word_aug):
   return delete_word_aug.augment(text)
 
 def back_translation_augmentation(text, translator_aug, back_translator_aug ):
-  translator_aug = GoogleTranslator(source=original_language, target=target_language)
-  back_translator_aug = GoogleTranslator(source=target_language, target=original_language)
+  try:
+    translation = translator_aug.translate(text)
+    return back_translator_aug.translate(translation)
+  except:
+    print("Vraciam rovnaky text")
+    return text
 
-  translation = translator_aug.translate(text)
-  return back_translator_aug.translate(translation)
+def swap_neighbor_sentences_augmentation(text, swap_neighbor_sentences_aug):
+  return swap_neighbor_sentences_aug.augment(text)
 
-def swap_neighbor_sentences_augmentation(text, swap_neighbor_sentences_aug_p):
-  swap_neighbor_sentences_aug = nas.RandomSentAug(mode='neighbor', action='swap', aug_p=swap_neighbor_sentences_aug_p, aug_min=1, aug_max=None)
-  return aug.augment(text)
-
-def swap_random_sentences_augmentation(text, swap_random_sentences_aug_p):
-  swap_random_sentences_aug = nas.RandomSentAug(mode='random', action='swap', aug_p=swap_random_sentences_aug_p, aug_min=1, aug_max=None)
-  return aug.augment(text)
+def swap_random_sentences_augmentation(text, swap_random_sentences_aug):
+  return swap_random_sentences_aug.augment(text)
 
 
 def background(f):
@@ -40,8 +39,8 @@ def background(f):
 
 @background
 def augmentation(index, augmentation_samples, split_name, synonym_aug_probability, swap_word_aug_probability, delete_word_aug_probability, 
-    swap_neighbor_sentences_aug_probability, swap_random_sentences_aug_probability, back_translation_aug_probability, synonym_aug_p, swap_word_aug_p,
-    delete_word_aug_p, swap_neighbor_sentences_aug_p, swap_random_sentences_aug_p, original_lan_back_translation_aug, target_lan_back_translation_aug):
+    swap_neighbor_sentences_aug_probability, swap_random_sentences_aug_probability, back_translation_aug_probability, synonym_word_aug, 
+    swap_word_aug, delete_word_aug, translator_aug, back_translator_aug, swap_neighbor_sentences_aug, swap_random_sentences_aug):
     print(index)
     augmented_text = str()
     text = augmentation_samples['text'][index]
@@ -51,21 +50,21 @@ def augmentation(index, augmentation_samples, split_name, synonym_aug_probabilit
 
     #Word augmentation methods
     if augmetation_method == 0:
-      augmented_text = synonym_augmentation(text, synonym_aug_p)
+      augmented_text = synonym_augmentation(text, synonym_word_aug)
     elif augmetation_method == 1:
-      augmented_text = swap_word_augmentation(text, swap_word_aug_p)
+      augmented_text = swap_word_augmentation(text, swap_word_aug)
     elif augmetation_method == 2:
-      augmented_text = delete_word_augmentation(text, delete_word_aug_p)
+      augmented_text = delete_word_augmentation(text, delete_word_aug)
     
     #Sentence augmentation
     elif augmetation_method == 3:
-      augmented_text = swap_neighbor_sentences_augmentation(text, swap_neighbor_sentences_aug_p)
+      augmented_text = swap_neighbor_sentences_augmentation(text, swap_neighbor_sentences_aug)
     elif augmetation_method == 4:
-      augmented_text =swap_random_sentences_augmentation(text, swap_random_sentences_aug_p)
+      augmented_text =swap_random_sentences_augmentation(text, swap_random_sentences_aug)
 
     #Others
     elif augmetation_method == 5:
-      augmented_text = back_translation_augmentation(text, original_lan_back_translation_aug, target_lan_back_translation_aug)
+      augmented_text = back_translation_augmentation(text, translator_aug, back_translator_aug)
 
     return {'text': augmentation_samples['text'][index], 'label': augmentation_samples['label'][index], 'augmented_text': augmented_text}
     #augmented_list.append(new_row)
@@ -76,7 +75,7 @@ def main():
   proportio_of_dataset = 0.01 #Proportion of dataset, which will be augmentated
   split_name = "train" #Split name, which indicate what loaded dataset we should augmentate
 
-  synonym_aug_probability = 1 #Probability distribution for synonym augmentation
+  synonym_aug_probability = 0 #Probability distribution for synonym augmentation
   synonym_aug_p = 0.3 #Percentage of word will be synonym word augmented 
 
   swap_word_aug_probability = 0 #Probability distribution for swap word augmentation
@@ -91,7 +90,7 @@ def main():
   swap_random_sentences_aug_probability = 0 #Probability distribution for delete word augmentation
   swap_random_sentences_aug_p = 0.3 #Percentage of sentences will be deleted
 
-  back_translation_aug_probability = 0 #Probability distribution for back translation augmentation
+  back_translation_aug_probability = 1 #Probability distribution for back translation augmentation
   original_lan_back_translation_aug = 'en' #Original language of text
   target_lan_back_translation_aug = 'sk' #Target language, which is used during back transaltion augmentation
 
@@ -118,11 +117,14 @@ def main():
   delete_word_aug = naw.RandomWordAug(action="delete", aug_p=delete_word_aug_p, aug_min=1, aug_max=None)
   translator_aug = GoogleTranslator(source=original_lan_back_translation_aug, target=target_lan_back_translation_aug)
   back_translator_aug = GoogleTranslator(source=target_lan_back_translation_aug, target=original_lan_back_translation_aug)
+  swap_neighbor_sentences_aug = nas.RandomSentAug(mode='neighbor', action='swap', aug_p=swap_neighbor_sentences_aug_p, aug_min=1, aug_max=None)
+  swap_random_sentences_aug = nas.RandomSentAug(mode='random', action='swap', aug_p=swap_random_sentences_aug_p, aug_min=1, aug_max=None)
+  
 
   loop = asyncio.get_event_loop()   
   looper = asyncio.gather(*[augmentation(i, augmentation_samples, split_name, synonym_aug_probability, swap_word_aug_probability, delete_word_aug_probability, 
-    swap_neighbor_sentences_aug_probability, swap_random_sentences_aug_probability, back_translation_aug_probability, synonym_aug_p, swap_word_aug_p,
-    delete_word_aug_p, swap_neighbor_sentences_aug_p, swap_random_sentences_aug_p, original_lan_back_translation_aug, target_lan_back_translation_aug) for i in range(len(augmentation_samples['text']))]) # Run the loop
+    swap_neighbor_sentences_aug_probability, swap_random_sentences_aug_probability, back_translation_aug_probability, synonym_word_aug, 
+    swap_word_aug, delete_word_aug, translator_aug, back_translator_aug, swap_neighbor_sentences_aug, swap_random_sentences_aug) for i in range(len(augmentation_samples['text']))]) # Run the loop
   results = loop.run_until_complete(looper)  
   df = pd.DataFrame.from_records(results)
   df.to_csv(path_and_name_of_generated_csv_file, index=False, sep=";")

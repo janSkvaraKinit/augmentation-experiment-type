@@ -3,3 +3,5 @@ deep_translator==1.11.4
 nlpaug==1.1.11
 numpy==1.25.2
 pandas==2.0.3
+nltk==3.8.1
+asyncio==3.4.3
